@@ -9,6 +9,7 @@ const Results = () => {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState("Establishing secure connection...");
 
   useEffect(() => {
     if (!location.state?.preferences) {
@@ -28,7 +29,13 @@ const Results = () => {
       } catch (err) {
         console.error("Failed to fetch recommendations", err);
       }
-      setTimeout(() => setLoading(false), 1500); // Artificial delay for effect
+      
+      // UX: Simulate multi-stage algorithm
+      setTimeout(() => setLoadingText("Scanning 10,000+ local assets..."), 400);
+      setTimeout(() => setLoadingText("Running multi-point legal forensics..."), 1000);
+      setTimeout(() => setLoadingText("Calculating Yield Multipliers..."), 1600);
+      setTimeout(() => setLoadingText("Finalizing Verdict..."), 2200);
+      setTimeout(() => setLoading(false), 2600);
     };
 
     fetchMatches();
@@ -37,9 +44,18 @@ const Results = () => {
   if (loading || results.length === 0) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', color: 'var(--color-accent)' }}>
-        <Activity size={64} className="spin" style={{ marginBottom: '32px' }} />
-        <h2 style={{ fontSize: '24px', letterSpacing: '0.2em', fontWeight: 300, marginBottom: '16px' }}>TRUTH ENGINE ACTIVE</h2>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', letterSpacing: '0.1em' }}>Algorithmically scanning 10,000+ verified properties to find your perfect match...</p>
+        <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '40px' }}>
+           <div style={{ position: 'absolute', width: '100%', height: '100%', border: '2px solid rgba(230,194,88,0.2)', borderRadius: '50%', animation: 'spin 4s linear infinite' }}></div>
+           <div style={{ position: 'absolute', width: '70%', height: '70%', border: '2px solid rgba(230,194,88,0.5)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 2s linear infinite reverse' }}></div>
+           <Activity size={32} style={{ animation: 'pulse 1.5s infinite' }} />
+        </div>
+        
+        <h2 style={{ fontSize: '24px', letterSpacing: '0.3em', fontWeight: 300, marginBottom: '24px', color: 'white' }}>TRUTH ENGINE ACTIVE</h2>
+        <div style={{ height: '20px' }}>
+          <p className="animate-pro" key={loadingText} style={{ color: 'var(--color-accent)', fontSize: '13px', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 600 }}>
+            {loadingText}
+          </p>
+        </div>
       </div>
     );
   }

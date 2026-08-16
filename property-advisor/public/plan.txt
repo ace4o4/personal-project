@@ -1,0 +1,1171 @@
+
+PROPSCOPE
+propscope.in
+
+Complete Handover & Requirement Document
+For Claude Code / Development Team
+Version 3.0 — July 2026
+
+Field
+Details
+Platform
+Web Application (PWA-ready, mobile-responsive)
+Domain
+propscope.in
+Target Market
+Gurgaon — expanding to Noida by EOY 2026
+Operator
+Solo realtor — AI agent-assisted operations
+V1 Target
+Live in 15 days
+Data
+~40-60 deep-scored projects at launch, expanding to 200+
+Dev Tool
+Claude Code (primary)
+Tech Stack
+Next.js + PostgreSQL on Contabo VPS (4 vCPU, 8 GB RAM)
+Image Storage
+Cloudflare R2 (free tier)
+CDN / SSL
+Cloudflare (free tier)
+ 
+Table of Contents
+1. Project Overview & Vision
+2. V1 Scope — Ship in 15 Days
+3. Tech Stack & Infrastructure
+4. Codebase Structure & Build Order
+5. Critical Rules (Read Before Coding)
+6. Database Schema — All Tables with SQL
+7. Scoring Methodology — Complete Rubric
+8. Projects Module — Listing, Filters, Detail Pages
+9. Admin Module
+10. Areas Module — Micro-Markets, Sectors, Momentum
+11. Legal, SEO & Sharing
+12. Data Population Strategy
+13. Phased Roadmap
+14. Budget
+ 
+1. Project Overview & Vision
+PropScope is a broker-first real estate intelligence platform for Gurgaon (Gurugram), India. Every project gets a transparent composite score (1-10) based on 7 weighted pillars. The operator is a solo realtor who uses this tool on client calls, shares project links on WhatsApp, and creates YouTube/Instagram content using the scores.
+This is NOT a property listing portal. There are no individual unit listings, no buy/sell/rent, no dealer/broker marketplace. It is a scoring and intelligence tool.
+1.1 Why Not 99acres
+	•	99acres is consumer-first — shows data for browsing, not broker workflow
+	•	No scoring, no objectivity, no builder track record analysis
+	•	Actively hostile to brokers — hides identity, pushes direct connects
+	•	PropScope is the opposite: broker-first interface, buyer-friendly output
+1.2 The Moat
+	•	Scoring methodology with published weights — transparent and defensible
+	•	Ground-truth data from site visits, floor plan analysis, contractor knowledge
+	•	Layout & Design scoring (18% weight) requires broker expertise — no AI can replicate without walking sites
+	•	Content flywheel: YouTube/Instagram drive traffic, PropScope data fuels content
+	•	When competing brokers use your tool, they build your brand
+1.3 Revenue Model
+	•	Lead capture through quiz and profile creation (Phase 2)
+	•	Retargeting pixel on all pages — ad spend only on deep-funnel audiences
+	•	Gurgaon: direct lead conversion as operating broker
+	•	Other cities: sell leads to verified channel partners
+	•	YouTube/Instagram content drives organic traffic
+ 
+2. V1 Scope — Ship in 15 Days
+V1 delivers three things only. Nothing else.
+2.1 Use Case 1: Quick Filtering on Client Calls
+Client says budget, location, category. Broker opens PropScope on phone, applies filters, instantly sees scored project cards sorted by composite score. Talks through top 3 with confidence.
+2.2 Use Case 2: Follow-Up & Detail Sharing
+After call, share PropScope project page link on WhatsApp. Client sees full score breakdown, area developments, builder profile in a credible, branded format.
+2.3 Use Case 3: Social Media Content
+Screenshot project cards or score breakdowns for Instagram reels and YouTube shorts. Data backs content, drives traffic to PropScope.
+2.4 V1 Deliverables
+	•	Project listing page with multi-filter search
+	•	Project cards: name, score badge, location, ticket size, category, momentum indicator, USP, image
+	•	Project detail page with 7-pillar score breakdown
+	•	Builder profile pages
+	•	Shareable URLs optimized for WhatsApp (Open Graph tags)
+	•	Basic admin for reviewing/editing AI-populated data
+	•	Methodology page explaining scoring
+	•	Legal disclaimer page + footer disclaimer
+	•	~40-60 deeply scored projects across 2 micro-markets at launch
+	•	GTM + Meta Pixel on all pages from day one
+2.5 V1 Does NOT Include
+	•	User login / signup
+	•	Buyer profiles or quiz
+	•	Personalized scoring
+	•	Comparison tool
+	•	Rental data
+	•	Listings / inventory
+Schema for all of the above is created in the database but no UI or API is built.
+ 
+3. Tech Stack & Infrastructure
+Layer
+Technology
+Notes
+Frontend + Backend
+Next.js (App Router)
+SSR for SEO. One codebase. TypeScript.
+Database
+PostgreSQL
+On same VPS.
+ORM
+Drizzle ORM (recommended)
+Type-safe, good Next.js integration.
+VPS
+Contabo Cloud VPS Core 4
+4 vCPU, 8 GB RAM, 200 GB SSD, EU datacenter.
+Image Storage
+Cloudflare R2
+Free tier. All images, brochures, floor plans.
+CDN / SSL
+Cloudflare
+Free tier. Point domain here.
+Tracking
+GTM + Meta Pixel
+On all pages from day one.
+Dev Tool
+Claude Code
+Primary development tool.
+Styling
+Tailwind CSS
+Minimal, clean design.
+
+No NocoDB. No Google Maps API. No paid external APIs in V1. Admin interface is built into the Next.js app as password-protected pages.
+ 
+4. Codebase Structure & Build Order
+4.1 Directory Structure
+/propscope
+├── CLAUDE.md
+├── src/
+│   ├── app/                     ← Next.js App Router pages
+│   │   ├── page.tsx                       ← homepage
+│   │   ├── [city]/
+│   │   │   ├── page.tsx                   ← city landing
+│   │   │   ├── [category]/page.tsx         ← category listing + filters
+│   │   │   └── projects/[slug]/page.tsx    ← project detail
+│   │   ├── builders/[slug]/page.tsx        ← builder profile
+│   │   ├── methodology/page.tsx
+│   │   ├── disclaimer/page.tsx
+│   │   ├── admin/                          ← password-protected
+│   │   │   ├── page.tsx                    ← dashboard
+│   │   │   ├── projects/page.tsx           ← project list
+│   │   │   ├── projects/[id]/page.tsx      ← edit project
+│   │   │   ├── builders/page.tsx
+│   │   │   └── scores/weights/page.tsx
+│   │   └── api/
+│   │       ├── projects/
+│   │       ├── builders/
+│   │       ├── scores/
+│   │       └── admin/
+│   ├── modules/
+│   │   ├── projects/     ← listing, filtering, detail components
+│   │   ├── scoring/      ← calculation logic, display, bands
+│   │   ├── builders/     ← builder profiles
+│   │   ├── areas/        ← micro-markets, momentum
+│   │   └── admin/        ← admin components, forms
+│   ├── lib/
+│   │   ├── db.ts         ← PostgreSQL connection
+│   │   ├── scoring.ts    ← scoring calculation functions
+│   │   └── utils.ts
+│   └── styles/
+├── scripts/
+│   ├── seed-master-data.ts
+│   ├── scrape-rera.ts
+│   ├── scrape-99acres.ts
+│   ├── calculate-scores.ts
+│   └── migrate.ts
+└── .env.local
+
+4.2 Build Order (Exact Sequence)
+Step 1: Database (Day 1-2)
+Set up PostgreSQL, create all tables, run seed script for master data (cities, micro-markets, sectors, builders, score_weights, neutral_seed_values, impact_benchmarks). Verify with sample data.
+Step 2: Scoring Engine (Day 2-3)
+Implement scoring calculation functions following the rubric exactly. Test with sample projects.
+Step 3: Project Pages (Day 4-7)
+Build listing page with filters, project cards, project detail page. Mobile-responsive.
+Step 4: Admin (Day 7-9)
+Build basic admin pages for reviewing/editing data. Password-protected.
+Step 5: Area Momentum (Day 9-10)
+Add area developments display to project pages. Green/amber/red badges on cards.
+Step 6: SEO, Legal, Sharing (Day 10-12)
+OG tags, methodology page, disclaimer, WhatsApp share, sitemap, structured data.
+Step 7: Data Population (Day 12-15)
+Run scraper scripts. Operator reviews via admin. Calculate scores. Launch.
+ 
+5. Critical Rules — Read Before Coding
+Rule 1: Every table has city_id.
+Multi-city is not optional. Noida expansion by EOY 2026.
+Rule 2: Sector slugs are unique(city_id, slug), not globally unique.
+Sector 63A exists in both Gurgaon and Noida.
+Rule 3: Sectors can belong to multiple micro-markets.
+Sector 68 is in both SPR and Golf Course Extension. Use project-level micro_market_id as authoritative assignment.
+Rule 4: Every project has is_published boolean.
+Scraped data enters as is_published = false. Only visible on public site after review. Admin shows unpublished in 'needs review' queue.
+Rule 5: Scores are never silently overwritten.
+When recalculating, archive current score to score_history with weights snapshot first.
+Rule 6: Missing data uses industry average, not flat 5.
+For first 30 verified scores per pillar, use manually seeded neutral values from neutral_seed_values table. Switch to rolling average after 30+ verified projects.
+Rule 7: Images go to Cloudflare R2, not VPS disk.
+Store only URLs in the database. 200 projects × 10 images will fill the SSD.
+Rule 8: Follow the scoring rubric exactly.
+See Section 7 for complete conversion tables. Do not invent formulas.
+Rule 9: No Google Maps API. No paid APIs in V1.
+Store lat/lng for future use but do not call external APIs.
+Rule 10: Methodology page launches with the site.
+It explains the 7 pillars, weights, and bands. It is the trust layer.
+ 
+6. Database Schema — Complete SQL
+PostgreSQL. All tables include city_id for multi-city readiness. Schema is additive — new features add tables, never restructure core.
+6.1 cities
+CREATE TABLE cities (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(100) NOT NULL UNIQUE,
+  state VARCHAR(100),
+  country VARCHAR(100) DEFAULT 'India',
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+6.2 micro_markets
+CREATE TABLE micro_markets (
+  id SERIAL PRIMARY KEY,
+  city_id INTEGER NOT NULL REFERENCES cities(id),
+  name VARCHAR(200) NOT NULL,
+  slug VARCHAR(200) NOT NULL,
+  description TEXT,
+  center_lat DECIMAL(10,7),
+  center_lng DECIMAL(10,7),
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(city_id, slug)
+);
+
+6.3 sectors
+CREATE TABLE sectors (
+  id SERIAL PRIMARY KEY,
+  city_id INTEGER NOT NULL REFERENCES cities(id),
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(100) NOT NULL,
+  maturity_level VARCHAR(20),
+  UNIQUE(city_id, slug)
+);
+
+-- Join table for many-to-many sector-micro_market mapping
+CREATE TABLE sector_micro_market (
+  sector_id INTEGER REFERENCES sectors(id),
+  micro_market_id INTEGER REFERENCES micro_markets(id),
+  PRIMARY KEY (sector_id, micro_market_id)
+);
+NOTE: The project-level micro_market_id is authoritative. This join table is reference only.
+
+6.4 builders
+CREATE TABLE builders (
+  id SERIAL PRIMARY KEY,
+  city_id INTEGER REFERENCES cities(id),
+  name VARCHAR(200) NOT NULL,
+  slug VARCHAR(200) NOT NULL UNIQUE,
+  tier VARCHAR(10), -- tier_1 / tier_2 / tier_3
+  years_in_business INTEGER,
+  is_listed BOOLEAN DEFAULT false,
+  total_projects_national INTEGER,
+  total_projects_local INTEGER,
+  rera_complaints_count INTEGER DEFAULT 0,
+  on_time_delivery_pct DECIMAL(5,2),
+  preferred_contractors TEXT,
+  logo_url VARCHAR(500),
+  description TEXT,
+  data_source VARCHAR(20) DEFAULT 'needs_attention',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+ 
+6.5 projects (Main Table)
+Fields grouped by purpose. All in one table.
+Identity Fields
+Field
+Type
+Notes
+id
+SERIAL PK
+
+city_id
+FK → cities
+Multi-city ready
+micro_market_id
+FK → micro_markets
+Authoritative micro-market for this project
+sector_id
+FK → sectors
+
+builder_id
+FK → builders
+
+name
+VARCHAR(300)
+Official name per RERA
+slug
+VARCHAR(300) UNIQUE
+For clean URLs
+rera_number
+VARCHAR(100)
+
+category
+VARCHAR(30)
+ENUM: high_rise_affordable, high_rise_normal, plot, sco_plot, sco_floor, builder_floor, commercial_office, commercial_retail, villa, mixed_use
+status
+VARCHAR(25)
+ENUM: new_launch, under_construction, near_possession, delivered
+launch_date
+DATE
+
+rera_possession_date
+DATE
+
+expected_possession_date
+DATE
+
+
+Location Fields
+Field
+Type
+Notes
+landmark
+VARCHAR(300)
+
+pin_code
+VARCHAR(10)
+
+distance_metro_min
+DECIMAL(5,1)
+In MINUTES, not km
+distance_hospital_km
+DECIMAL(5,1)
+
+distance_school_km
+DECIMAL(5,1)
+
+distance_arterial_road_km
+DECIMAL(5,1)
+
+neighborhood_maturity_score
+DECIMAL(3,1)
+Manual input 1-10
+
+Pricing Fields
+Field
+Type
+Notes
+base_price_per_sqft
+DECIMAL(12,2)
+For apartments, floors
+base_price_per_sqyd
+DECIMAL(12,2)
+For plots, SCO
+min_ticket_size
+DECIMAL(14,2)
+Starting price INR
+max_ticket_size
+DECIMAL(14,2)
+Top price INR
+payment_plans
+TEXT
+CLP/FLP/subvention
+
+Density Fields
+Field
+Type
+Notes
+units_per_acre
+DECIMAL(6,1)
+
+open_space_pct
+DECIMAL(5,2)
+
+tower_spacing_meters
+DECIMAL(5,1)
+
+far_utilization_pct
+DECIMAL(5,2)
+
+
+Amenities Fields
+Field
+Type
+Notes
+essential_amenities
+JSONB
+["power_backup", "water_supply", ...]
+lifestyle_amenities
+JSONB
+["clubhouse", "pool", ...]
+amenities_delivered
+BOOLEAN
+Built or just promised?
+
+Construction Fields
+Field
+Type
+Notes
+contractor_name
+VARCHAR(200)
+
+construction_progress_pct
+DECIMAL(5,2)
+
+months_ahead_behind
+INTEGER
+Positive = ahead, negative = behind
+material_quality_notes
+TEXT
+
+
+Legal Fields
+Field
+Type
+Notes
+land_title_status
+VARCHAR(20)
+clear / disputed / under_litigation / data_not_found
+tcp_status
+VARCHAR(200)
+
+pending_court_cases
+INTEGER
+
+legal_notes
+TEXT
+
+legal_data_source
+VARCHAR(20)
+government / third_party / not_found
+
+Content Fields
+Field
+Type
+Notes
+usp_text
+VARCHAR(500)
+One-liner for calls and cards
+detailed_description
+TEXT
+
+brochure_url
+VARCHAR(500)
+Cloudflare R2 URL
+floor_plan_urls
+JSONB
+Array of URLs
+site_plan_url
+VARCHAR(500)
+
+gallery_image_urls
+JSONB
+Array of URLs
+
+Metadata Fields
+Field
+Type
+Notes
+data_source
+VARCHAR(20)
+primary / mixed / needs_attention
+is_published
+BOOLEAN DEFAULT false
+CRITICAL — scraped data enters unpublished
+last_verified_date
+DATE
+
+created_at
+TIMESTAMP
+
+updated_at
+TIMESTAMP
+
+
+Indexes on projects:
+	•	city_id, category, status, micro_market_id, builder_id, is_published, (min_ticket_size, max_ticket_size)
+ 
+6.6 project_configurations (Critical for call filtering)
+When client says '3BHK under 2.5 CR', this table enables that query. One row per unit type per project.
+Field
+Type
+Notes
+id
+SERIAL PK
+
+project_id
+FK → projects ON DELETE CASCADE
+
+unit_type
+VARCHAR(50)
+2BHK, 3BHK, 4BHK, Plot 150sqyd, Shop, Office
+size_sqft
+INTEGER
+
+size_sqyd
+INTEGER
+
+carpet_area_sqft
+INTEGER
+
+carpet_to_super_ratio
+DECIMAL(4,3)
+e.g. 0.65
+price
+DECIMAL(14,2)
+Unit price in INR
+price_per_sqft
+DECIMAL(10,2)
+
+price_per_sqyd
+DECIMAL(10,2)
+
+total_units
+INTEGER
+How many of this type
+ 
+6.7 scores
+Field
+Type
+Notes
+id
+SERIAL PK
+
+project_id
+FK → projects (UNIQUE)
+One score per project
+location_score
+DECIMAL(3,1)
+1-10
+builder_score
+DECIMAL(3,1)
+
+layout_score
+DECIMAL(3,1)
+
+density_score
+DECIMAL(3,1)
+
+amenities_score
+DECIMAL(3,1)
+
+legal_score
+DECIMAL(3,1)
+
+value_for_money_score
+DECIMAL(3,1)
+
+composite_score
+DECIMAL(3,1)
+Weighted average
+has_neutral_values
+BOOLEAN
+True if any pillar uses average
+neutral_pillars
+JSONB
+["legal", "density"]
+score_calculated_at
+TIMESTAMP
+
+
+6.8 score_history
+Archived before every score overwrite. Includes weights snapshot for verifiability.
+Field
+Type
+Notes
+id
+SERIAL PK
+
+project_id
+FK → projects
+
+All 7 pillar scores
+DECIMAL(3,1)
+Same as scores table
+composite_score
+DECIMAL(3,1)
+
+weights_snapshot
+JSONB
+{"location": 25, "builder": 20, ...}
+reason
+VARCHAR(200)
+weight_change / data_update / manual_override
+recorded_at
+TIMESTAMP
+
+
+6.9 score_weights
+Pillar
+Weight %
+location
+25
+builder
+20
+layout
+18
+density
+12
+amenities
+10
+legal
+10
+value_for_money
+5
+
+6.10 neutral_seed_values
+Used when data is missing. Manually seeded by operator for first 30 projects per pillar.
+Pillar
+Seed Value
+Notes
+location
+6.0
+
+builder
+6.5
+
+layout
+6.0
+
+density
+6.0
+
+amenities
+5.5
+
+legal
+7.0
+Most Gurgaon projects have clear titles
+value_for_money
+6.0
+
+Table also has use_rolling_avg (boolean) and min_verified_for_rolling (integer, default 30). Flip to rolling after 30+ verified real scores.
+
+6.11 area_developments
+Field
+Type
+Notes
+id
+SERIAL PK
+
+city_id
+FK → cities
+
+sector_id
+FK → sectors (nullable)
+
+micro_market_id
+FK → micro_markets (nullable)
+
+development_type
+VARCHAR(30)
+metro_extension, road_widening, hospital, school, commercial_hub, flyover, signal_free_corridor, park, etc.
+description
+TEXT
+
+impact_direction
+VARCHAR(10)
+positive / negative / mixed
+impact_note
+VARCHAR(500)
+Operator's one-liner on expected impact
+expected_completion
+DATE
+
+source_url
+VARCHAR(500)
+
+data_source
+VARCHAR(30)
+government_gazette / news / builder_claim / observation
+verified
+BOOLEAN
+
+
+6.12 development_impact_benchmarks
+Development Type
+Avg Price Impact %
+Timeline
+metro_extension
++30-60%
+2-4 years post-completion
+road_widening
++15-25%
+1-2 years post-completion
+hospital
++10-20%
+1-3 years
+school
++5-15%
+1-2 years
+commercial_hub
++20-40%
+2-5 years
+flyover
++10-20%
+1-2 years post-completion
+signal_free_corridor
++15-25%
+1-3 years
+
+6.13 Phase 2 Tables (Create now, no UI)
+buyers, buyer_personalized_weights, buyer_activity, comparisons, rental_data — see markdown specs for full SQL. Create tables in database but build no frontend or API for them in V1.
+ 
+7. Scoring Methodology — Complete Rubric
+This is the core product. Every formula must be implemented EXACTLY as specified. Do not invent, modify, or improve any calculation.
+7.1 Composite Score Formula
+composite = (location × 0.25) + (builder × 0.20) + (layout × 0.18) + (density × 0.12) + (amenities × 0.10) + (legal × 0.10) + (value_for_money × 0.05)
+Weights read from score_weights table at calculation time — never hardcoded.
+7.2 Score Bands
+Range
+Band
+Color Hex
+Label
+8.5-10.0
+Excellent
+#1E8449 green
+Strong buy consideration
+7.0-8.4
+Good
+#2E86C1 blue
+Worth serious evaluation
+5.5-6.9
+Average
+#D4AC0D amber
+Proceed with caution
+Below 5.5
+Weak
+#C0392B red
+Significant concerns
+ 
+7.3 Pillar 1: Location (25%)
+Three sub-components, equally weighted (33.3% each):
+1a. Connectivity (33.3% of Location)
+Metro distance (in minutes):
+Metro (minutes)
+Score
+≤ 10
+10
+11-15
+8.5
+16-20
+7
+21-30
+5.5
+31-45
+4
+> 45 or no metro
+2.5
+
+Arterial road distance (km):
+Arterial Road (km)
+Score
+≤ 0.5
+10
+0.6-1.0
+8.5
+1.1-2.0
+7
+2.1-3.0
+5.5
+3.1-5.0
+4
+> 5.0
+2.5
+Connectivity = (metro_score + arterial_score) / 2
+1b. Social Infrastructure (33.3% of Location)
+Hospital distance (km):
+Hospital (km)
+Score
+≤ 2
+10
+2.1-4
+8
+4.1-7
+6
+7.1-10
+4
+> 10
+2
+
+School CBSE/ICSE distance (km):
+School (km)
+Score
+≤ 2
+10
+2.1-4
+8
+4.1-6
+6
+6.1-10
+4
+> 10
+2
+Social infra = (hospital_score + school_score) / 2
+1c. Neighborhood Maturity (33.3% of Location)
+MANUAL input (1-10). Operator's assessment of: roads, habitation, streetlights, water, sewage, commercial markets, general livability. No formula — direct input.
+
+Location Score = (connectivity × 0.333) + (social_infra × 0.333) + (maturity × 0.334)
+ 
+7.4 Pillar 2: Builder (20%)
+Four sub-components:
+2a. Track Record (30% of Builder)
+On-Time Delivery %
+Score
+≥ 90%
+10
+80-89%
+8
+70-79%
+6.5
+60-69%
+5
+50-59%
+3.5
+< 50%
+2
+2b. Legacy & Brand (25% of Builder)
+Tier
+Base Score
+tier_1
+8.5
+tier_2
+6.5
+tier_3
+4.5
+Modifiers (add to base, cap at 10): is_listed = +0.5; years_in_business >= 20 = +0.5; years 10-19 = +0.25
+2c. RERA Compliance (25% of Builder)
+complaint_ratio = rera_complaints_count / MAX(total_projects_local, 1)
+Complaint Ratio
+Score
+0
+10
+0.01-0.05
+8
+0.06-0.15
+6
+0.16-0.30
+4
+> 0.30
+2
+2d. Contractor Quality (20% of Builder)
+Contractor
+Score
+L&T, Shapoorji Pallonji, Tata Projects
+10
+Other nationally recognized
+8
+Regional known
+6
+Unknown / local
+4
+Data not available
+neutral_seed_value
+
+Builder Score = (track × 0.30) + (legacy × 0.25) + (rera × 0.25) + (contractor × 0.20)
+ 
+7.5 Pillar 3: Layout & Design (18%)
+ENTIRELY MANUAL. Operator enters layout_score (1-10) in admin.
+Cannot be auto-calculated. Requires: walking sites, analyzing floor plans, judging carpet efficiency, vastu compliance, ventilation, unit mix. If not scored yet: use neutral_seed_value, mark has_neutral_values = true.
+7.6 Pillar 4: Density (12%)
+4a. Units Per Acre (40% of Density)
+Units/Acre
+Score
+≤ 20
+10
+21-35
+8
+36-50
+6
+51-70
+4.5
+71-100
+3
+> 100
+1.5
+4b. Open Space % (30% of Density)
+Open Space %
+Score
+≥ 75%
+10
+60-74%
+8
+45-59%
+6.5
+30-44%
+5
+15-29%
+3
+< 15%
+1.5
+4c. Tower Spacing (30% of Density)
+Spacing (meters)
+Score
+≥ 40
+10
+30-39
+8
+20-29
+6
+15-19
+4
+< 15
+2
+
+Density Score = (units_per_acre × 0.40) + (open_space × 0.30) + (tower_spacing × 0.30)
+ 
+7.7 Pillar 5: Amenities (10%)
+5a. Essential Amenities (60% of Amenities)
+Score = (count of present / 7) × 10. Items: power_backup, water_supply, security_system, elevator (branded), fire_safety, parking (≥1 per unit), sewage_treatment.
+5b. Lifestyle Amenities (40% of Amenities)
+Score = (count of present / 8) × 10. Items: clubhouse, swimming_pool, gym, kids_play_area, jogging_track, sports_courts, landscaped_gardens, community_hall.
+If amenities_delivered = false: multiply lifestyle score by 0.7 (30% discount for undelivered promises).
+Amenities Score = (essential_ratio × 10 × 0.60) + (lifestyle_ratio × 10 × delivery_modifier × 0.40)
+7.8 Pillar 6: Legal (10%)
+Land Title Status
+Base Score
+clear
+9
+data_not_found
+neutral_seed_value
+disputed
+3
+under_litigation
+1.5
+Modifiers: clear + 0 court cases = +1 (cap 10). Each pending court case = -1 (floor 1). Third-party data source = -0.5. If legal_data_source = 'not_found': use neutral_seed_value, ignore modifiers.
+7.9 Pillar 7: Value for Money (5%)
+Compare project BSP to micro-market average for same category.
+ratio = project_bsp / micro_market_avg_bsp
+Ratio (project / average)
+Score
+Meaning
+≤ 0.80
+9.5
+Great value
+0.81-0.90
+8
+Good value
+0.91-1.05
+6.5
+Fair
+1.06-1.15
+5
+Slightly above market
+1.16-1.30
+3.5
+Premium pricing
+> 1.30
+2
+Must justify with other pillars
+If fewer than 3 projects in same micro-market + category: use neutral_seed_value.
+ 
+8. Projects Module — Listing, Filters, Detail Pages
+8.1 Listing Page Filters
+Filter
+Type
+Source
+Category
+Multi-select
+category enum
+Micro Market
+Multi-select
+micro_markets table
+Sector
+Multi-select (filtered by micro-market)
+sectors table
+Budget Range
+Min-Max slider
+project_configurations.price
+Unit Type
+Multi-select (2BHK, 3BHK, etc)
+project_configurations.unit_type
+Status
+Multi-select
+status enum
+Builder
+Search + multi-select
+builders table
+Min Score
+Slider 1-10
+scores.composite_score
+Price per sqft/sqyd
+Min-Max
+projects base_price fields
+
+Sort: Score high-low (default), Price low-high, Price high-low, Newest first, Possession soonest.
+Only is_published = true projects shown. Pagination: 20 per page.
+8.2 Project Card Elements
+	•	Hero image (first from gallery_image_urls or placeholder)
+	•	Score badge — number + band label, colored by band
+	•	Area momentum badge — green/amber/red (from area_developments count)
+	•	Project name + builder name
+	•	Sector + micro-market
+	•	Category tag
+	•	Ticket size range (formatted: ₹1.8 CR - ₹3.2 CR)
+	•	Unit types (from project_configurations)
+	•	BSP (base_price_per_sqft or per_sqyd)
+	•	USP text (operator's one-liner)
+8.3 Project Detail Page Sections (top to bottom)
+	•	Hero image gallery/carousel
+	•	Project name, builder, location, category badge, status badge
+	•	Composite score prominently displayed with 7-pillar breakdown bars
+	•	Each pillar: bar visualization + numeric score + brief explanation + data source tag
+	•	Neutral value tags on affected pillars
+	•	'See our methodology' link to /methodology
+	•	Area Momentum section — developments with impact benchmarks
+	•	Key details: RERA number, dates, total units, payment plans
+	•	Configurations table: unit type, size, carpet, price per row
+	•	Density & construction details
+	•	Amenities: essential + lifestyle checklists, delivery status
+	•	Legal status with data source, court cases, notes
+	•	Builder profile card (summary with link)
+	•	USP text (pull quote) + detailed description
+	•	Downloads: brochure, floor plans, site plan
+	•	Share: WhatsApp button (pre-formatted message), copy link
+	•	Data source footer: source, last verified, credibility label
+8.4 Open Graph Tags (Critical for WhatsApp)
+og:title = '{Project} — {Score}/10 | PropScope'
+og:description = '{USP}. {Category} in {Sector}, {Micro-market}. ₹{min}-₹{max}.'
+og:image = first gallery image URL
+Test by sharing link in WhatsApp and verifying preview card shows correctly.
+ 
+9. Admin Module
+Simple password-protected pages. Single password from ADMIN_PASSWORD env var. Session cookie after login.
+9.1 Dashboard (/admin)
+	•	Total projects: published / unpublished counts
+	•	Projects with data_source = 'needs_attention' — count + link
+	•	Projects with has_neutral_values = true — count + link
+	•	'Recalculate All Scores' button
+9.2 Project List (/admin/projects)
+Table: Name, Builder, Category, Status, Score, Published, Data Source, Actions. Filterable by published status, data_source, category. Actions: Edit, Toggle publish, Recalculate score.
+9.3 Project Edit (/admin/projects/[id])
+Form with all project fields in collapsible sections: Identity, Location, Pricing, Configurations (inline table — add/remove rows), Density, Amenities (checklists), Construction, Legal, Content, Metadata. Scores section: read-only calculated + manual override for Layout pillar. Save triggers score recalculation.
+9.4 Score Weights (/admin/scores/weights)
+Editable weight table. 'Save & Recalculate All' button — archives all current scores to history, recalculates everything.
+ 
+10. Areas Module — Micro-Markets, Sectors, Momentum
+10.1 Gurgaon Micro-Markets Seed Data
+Micro Market
+Key Sectors
+Dwarka Expressway
+99, 99A, 102, 103, 104, 106, 108, 109, 110, 111, 112, 113, 37D
+New Gurgaon
+76, 77, 79-86, 88-93, 95
+Golf Course Extension
+55, 56, 58-63, 63A, 65-69
+SPR
+68-72, 70A, 72A, 73-75, 74A
+Sohna Road
+33-36, 47-49
+NH-8 / Delhi-Jaipur
+82A, 83-88, 88A
+MG Road / DLF I-V
+25-29, 42, 43
+Golf Course Road
+42, 43, 53-55
+Old Gurgaon
+1-23
+KMP Expressway
+95A, 95B
+Sectors 68, 69 appear in both SPR and Golf Course Extension. Sectors 42, 43 in both MG Road and Golf Course Road.
+10.2 Area Momentum Badge
+For each project, count positive vs negative developments in its sector/micro-market.
+	•	More positive than negative → green badge 'Area Improving'
+	•	Equal or mixed → amber badge 'Area Mixed'
+	•	More negative → red badge 'Area Concerns'
+	•	No developments → no badge shown
+Badge clickable → expands to show development details with impact benchmarks.
+ 
+11. Legal, SEO & Sharing
+11.1 Methodology Page (/methodology) — REQUIRED AT LAUNCH
+Public page explaining: 7 pillars with weights, scoring scale and bands, data sources and credibility tiers, limitations, builder contest process.
+11.2 Legal Disclaimer
+Footer (every page):
+'PropScope scores are opinions derived from stated criteria and publicly available data. They do not constitute investment advice. All property decisions should involve independent due diligence. PropScope is operated by [Name], a RERA-registered broker (Reg. No: [number]).'
+Full disclaimer page (/disclaimer):
+Scores as opinions, data accuracy caveats, 'data not found' explanation, operator disclosure as practicing broker, investment risk warning, builder contest process.
+11.3 SEO
+	•	Unique title + meta description per page type
+	•	Auto-generated sitemap.xml (all published pages)
+	•	robots.txt blocking /admin/ and /api/admin/
+	•	JSON-LD structured data on project pages (Product schema with aggregateRating)
+11.4 WhatsApp Share
+Pre-formatted: Project name, score + band, category, location, price range, USP, URL.
+Button uses: https://wa.me/?text={encoded_text}
+11.5 Tracking
+	•	GTM container on all pages (NEXT_PUBLIC_GTM_ID env var)
+	•	Meta Pixel via GTM (NEXT_PUBLIC_META_PIXEL_ID env var)
+	•	Events: PageView (all), ViewContent (project detail), Search (filter applied)
+ 
+12. Data Population Strategy
+12.1 AI Does 95%, Operator Verifies 5%
+AI agents (Claude Code + scripts) scrape RERA portal, 99acres, builder websites and populate the database. All entries arrive as is_published = false. Operator reviews via admin, adjusts scores, adds USP text and layout assessment, then publishes.
+12.2 Three Data Tiers
+Tier
+Source
+Credibility
+Tier 1
+Government (RERA, TCP, courts)
+Highest
+Tier 2
+Builder-provided (brochures, price lists)
+Medium-High
+Tier 3
+Third-party / channel partner / 99acres
+Medium
+Every data point displays its credibility tier. Projects flagged as primary/mixed/needs_attention.
+12.3 Launch Data Strategy
+Launch with 40-60 deeply scored projects across 2 micro-markets (recommended: Dwarka Expressway + New Gurgaon). Depth is the moat — breadth can be scraped by anyone. Thin data with 'market average pending' tags damages trust.
+Expand to 200+ over following 4-6 weeks as operator verifies more projects.
+12.4 99acres Note
+99acres ToS prohibits scraping and they block aggressively. Treat as research-assisted manual entry, not an automated pipeline you depend on.
+ 
+13. Phased Roadmap
+Phase 1 — Scoring Engine MVP (15 Days)
+Everything described in this document. Database, scoring engine with full rubric, project listing + detail pages, admin, area momentum, SEO, legal, data population, launch.
+Phase 2 — Buyer Journey (Month 2-3)
+	•	Self-discovery quiz / need assessment
+	•	Buyer profile creation
+	•	Personalized score toggle (re-weighted scores based on profile)
+	•	Comparison tool (2-3 projects side by side)
+	•	Buyer activity tracking
+	•	Bookmarks and recently viewed
+Phase 3 — Lead Engine (Month 3-4)
+	•	Retargeting campaigns on deep-funnel audiences
+	•	WordPress for landing pages and blog content
+	•	Lead dashboard — quiz completions, hot leads, activity patterns
+	•	WhatsApp integration for follow-up
+	•	Rental data scraping for yield calculations
+Phase 4 — Noida Expansion (By EOY 2026)
+	•	Add Noida city, micro-markets, sectors, builders, projects
+	•	Content strategy for Noida market
+	•	Lead selling to verified channel partners
+Phase 5 — Scale (2027+)
+	•	Additional cities — intercity expansion
+	•	Channel partner / broker accounts
+	•	Native mobile app (React Native) if demand justifies
+	•	Listings module — ONLY when dealer network and inventory is ready
+	•	International expansion — same scoring framework, local data
+ 
+14. Budget
+Item
+Cost
+Frequency
+Contabo VPS (4 vCPU, 8 GB)
+~$7-9 / month
+Monthly
+Domain (propscope.in)
+₹500-800
+Yearly
+Cloudflare (free tier)
+Free
+—
+Cloudflare R2 (free tier)
+Free
+—
+GTM + Meta Pixel
+Free
+—
+API usage
+Per task
+Total Monthly (V1)
+Under ₹1,000
+Monthly
+
+— End of Document —
