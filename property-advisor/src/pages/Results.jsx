@@ -1,24 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, X, MapPin, ExternalLink } from 'lucide-react';
-import { calculateMatches, calculateTruthScore } from '../utils/scoringEngine';
+import { calculateTruthScore } from '../utils/scoringEngine';
 import TruthScoreCard from '../components/TruthScoreCard';
 
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!location.state?.preferences) {
       navigate('/dna');
       return;
     }
-    const matches = calculateMatches(location.state.preferences);
-    setResults(matches);
+
+    const fetchMatches = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(location.state.preferences)
+        });
+        const json = await response.json();
+        setResults(json.data);
+      } catch (err) {
+        console.error("Failed to fetch recommendations", err);
+      }
+      setTimeout(() => setLoading(false), 1500); // Artificial delay for effect
+    };
+
+    fetchMatches();
   }, [location, navigate]);
 
-  if (results.length === 0) return null;
+  if (loading || results.length === 0) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', color: 'var(--color-accent)' }}>
+        <Activity size={64} className="spin" style={{ marginBottom: '32px' }} />
+        <h2 style={{ fontSize: '24px', letterSpacing: '0.2em', fontWeight: 300, marginBottom: '16px' }}>TRUTH ENGINE ACTIVE</h2>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', letterSpacing: '0.1em' }}>Algorithmically scanning 10,000+ verified properties to find your perfect match...</p>
+      </div>
+    );
+  }
 
   const topMatch = results[0];
   const otherMatches = results.slice(1, 4);

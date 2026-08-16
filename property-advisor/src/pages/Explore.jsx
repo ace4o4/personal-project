@@ -1,44 +1,32 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, SlidersHorizontal, Scale, Plus, Check } from 'lucide-react';
-import { properties } from '../data/mockProperties';
-import { calculateTruthScore } from '../utils/scoringEngine';
+import { ArrowLeft, SlidersHorizontal, Scale, Plus, Check, Loader } from 'lucide-react';
 
 const Explore = () => {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('score-desc');
   const [compareList, setCompareList] = useState([]);
+  
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Calculate Truth Scores for all properties so we can sort by them
-  const enrichedProperties = useMemo(() => {
-    return properties.map(p => ({
-      ...p,
-      calculatedTruthScore: calculateTruthScore(p).score
-    }));
-  }, []);
-
-  const sortedProperties = useMemo(() => {
-    let sorted = [...enrichedProperties];
-    switch (sortBy) {
-      case 'price-asc':
-        sorted.sort((a, b) => a.priceCr - b.priceCr);
-        break;
-      case 'price-desc':
-        sorted.sort((a, b) => b.priceCr - a.priceCr);
-        break;
-      case 'score-desc':
-        sorted.sort((a, b) => b.calculatedTruthScore - a.calculatedTruthScore);
-        break;
-      case 'yield-desc':
-        // Extremely basic string extraction for ROI sorting based on mock data ("12-15% PA" -> 12)
-        const getYield = (roiStr) => parseFloat(roiStr.match(/\d+(\.\d+)?/)?.[0] || 0);
-        sorted.sort((a, b) => getYield(b.roiEstimate) - getYield(a.roiEstimate));
-        break;
-      default:
-        break;
-    }
-    return sorted;
-  }, [enrichedProperties, sortBy]);
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`http://localhost:5000/api/explore?page=${page}&limit=12&sortBy=${sortBy}`);
+        const json = await res.json();
+        setProperties(json.data);
+        setTotalPages(json.pagination.totalPages);
+      } catch (err) {
+        console.error("Failed to fetch properties", err);
+      }
+      setLoading(false);
+    };
+    fetchProperties();
+  }, [page, sortBy]);
 
   const toggleCompare = (id) => {
     setCompareList(prev => {
@@ -107,8 +95,14 @@ const Explore = () => {
         </div>
 
         {/* Property Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', gap: '40px' }}>
-          {sortedProperties.map(p => {
+        {loading ? (
+          <div style={{ padding: '100px', textAlign: 'center', color: 'var(--color-accent)' }}>
+            <Loader size={48} className="spin" style={{ margin: '0 auto 24px' }} />
+            <div style={{ fontSize: '14px', letterSpacing: '0.2em' }}>QUERYING MASSIVE ASSET DATABASE...</div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', gap: '40px' }}>
+            {properties.map(p => {
             const isSelected = compareList.includes(p.id);
             return (
               <div key={p.id} className="pro-card" style={{ padding: '0', display: 'flex', flexDirection: 'column', borderRadius: '16px', overflow: 'hidden', border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', background: 'var(--color-surface)', transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)', transform: isSelected ? 'translateY(-8px)' : 'none', boxShadow: isSelected ? '0 30px 60px rgba(230,194,88,0.15)' : '0 10px 30px rgba(0,0,0,0.5)' }}>
@@ -174,7 +168,31 @@ const Explore = () => {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px', marginTop: '64px' }}>
+            <button 
+              className="btn-minimal" 
+              disabled={page === 1} 
+              onClick={() => setPage(p => p - 1)}
+              style={{ opacity: page === 1 ? 0.3 : 1, cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+            >
+              <ArrowLeft size={16} /> Prev
+            </button>
+            <div style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Page {page} of {totalPages}</div>
+            <button 
+              className="btn-minimal" 
+              disabled={page === totalPages} 
+              onClick={() => setPage(p => p + 1)}
+              style={{ opacity: page === totalPages ? 0.3 : 1, cursor: page === totalPages ? 'not-allowed' : 'pointer' }}
+            >
+              Next <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+            </button>
+          </div>
+        )}
 
       </main>
 

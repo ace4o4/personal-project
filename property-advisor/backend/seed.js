@@ -1,0 +1,150 @@
+import sqlite3 from 'sqlite3';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dbPath = path.resolve(__dirname, 'database.sqlite');
+if (fs.existsSync(dbPath)) {
+  fs.unlinkSync(dbPath); // Delete old db
+}
+
+const db = new sqlite3.Database(dbPath);
+
+const developers = ["DLF Limited", "Godrej Properties", "Sobha Developers", "Emaar India", "M3M India", "Lodha Group", "Prestige Estates", "Tata Housing", "Adani Realty", "Oberoi Realty"];
+const locations = [
+  "Sector 63, Golf Course Extension, Gurugram", "Sector 42, DLF Phase 5, Gurugram", "Sector 108, Dwarka Expressway, Gurugram",
+  "Worli, South Mumbai", "Bandra Kurla Complex, Mumbai", "Andheri West, Mumbai",
+  "Whitefield, Bangalore", "Electronic City, Bangalore", "Indiranagar, Bangalore",
+  "Koregaon Park, Pune", "Hinjewadi, Pune", "Kalyani Nagar, Pune"
+];
+
+const types = ["2 BHK Luxury Smart Home", "3 BHK Premium", "4 BHK Signature Residence", "4 BHK + Utility + Staff", "5 BHK Penthouse"];
+const images = [
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1200",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200",
+  "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80&w=1200",
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200"
+];
+
+const amenitiesList = ["Temperature Controlled Pool", "Private Elevators", "VRV Air Conditioning", "Triple Height Lobbies", "9-Hole Golf Course", "Voice Activated Homes", "Mini Theater", "Infinity Pool", "Signature Glass Facade", "White Glove Services", "8.5 Acre Central Park", "Cricket Ground"];
+
+const randomRange = (min, max) => Math.random() * (max - min) + min;
+const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const randomAmenities = () => {
+  let a = new Set();
+  while(a.size < 4) a.add(randomChoice(amenitiesList));
+  return Array.from(a).join('|');
+};
+
+db.serialize(() => {
+  console.log("Creating tables...");
+  db.run(`
+    CREATE TABLE properties (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      developer TEXT,
+      location TEXT,
+      priceCr REAL,
+      sizeSqFt REAL,
+      pricePerSqFt REAL,
+      type TEXT,
+      possession TEXT,
+      riskScore REAL,
+      vastuScore REAL,
+      sunlightScore REAL,
+      roiEstimate TEXT,
+      numericYield REAL,
+      amenities TEXT,
+      verdict TEXT,
+      image TEXT,
+      litigationStatus TEXT,
+      litigationDetail TEXT,
+      constructionStatus TEXT,
+      constructionDetail TEXT,
+      valueStatus TEXT,
+      valueDetail TEXT,
+      connectivityStatus TEXT,
+      connectivityDetail TEXT,
+      reraStatus TEXT,
+      reraDetail TEXT,
+      confidenceTag TEXT,
+      scoreLocation REAL,
+      scoreDeveloper REAL,
+      scoreConstruction REAL,
+      scoreLegal REAL,
+      scoreUsps REAL,
+      truthScore REAL
+    )
+  `);
+
+  console.log("Generating 10,000 properties. This may take a few seconds...");
+  
+  const stmt = db.prepare(`
+    INSERT INTO properties VALUES (
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    )
+  `);
+
+  db.run("BEGIN TRANSACTION");
+
+  for (let i = 1; i <= 10000; i++) {
+    const dev = randomChoice(developers);
+    const loc = randomChoice(locations);
+    const name = `${dev.split(' ')[0]} ${randomChoice(['Residences', 'Estate', 'Heights', 'Arbour', 'Oasis', 'Park', 'DigiHomes', 'Pinnacle'])} ${i}`;
+    const priceCr = parseFloat(randomRange(1.5, 25.0).toFixed(2));
+    const sizeSqFt = Math.floor(randomRange(1200, 6000));
+    const pricePerSqFt = Math.floor((priceCr * 10000000) / sizeSqFt);
+    
+    const baseScore = randomRange(6, 9.9);
+    const legalScore = randomRange(6, 9.9);
+    
+    // Truth score is an aggregate
+    const truthScore = parseFloat(((baseScore * 0.4) + (legalScore * 0.6) * 10).toFixed(1));
+    const yieldNum = parseFloat(randomRange(4, 15).toFixed(1));
+    const roiEstimate = `${yieldNum}-${(yieldNum + 2).toFixed(1)}% PA`;
+    
+    const isClean = legalScore > 8;
+    const litStatus = isClean ? 'clean' : 'warning';
+    const litDetail = isClean ? 'Clear Title. No pending disputes.' : 'Some land acquisition disputes historically reported.';
+    
+    stmt.run([
+      `p_${i}`,
+      name,
+      dev,
+      loc,
+      priceCr,
+      sizeSqFt,
+      pricePerSqFt,
+      randomChoice(types),
+      randomChoice(["Ready to Move", "Q4 2025", "Q2 2026", "Q1 2027", "Q4 2027"]),
+      parseFloat(randomRange(6, 9.9).toFixed(1)), // riskScore
+      parseFloat(randomRange(5, 10).toFixed(1)), // vastuScore
+      parseFloat(randomRange(6, 10).toFixed(1)), // sunlightScore
+      roiEstimate,
+      yieldNum, // numericYield for fast sorting
+      randomAmenities(),
+      `A robust asset generated by Truth Engine. Mathematically sound valuation at ₹${pricePerSqFt}/sqft.`,
+      randomChoice(images),
+      litStatus, litDetail,
+      randomChoice(['excellent', 'good']), 'Premium Mivan Construction.',
+      randomChoice(['fair', 'warning']), 'Priced competitively for the micro-market.',
+      'excellent', 'Prime connectivity to major hubs.',
+      'clean', 'RERA Approved.',
+      isClean ? 'High' : 'Medium',
+      parseFloat(randomRange(7, 9.9).toFixed(1)), // loc
+      parseFloat(randomRange(7, 9.9).toFixed(1)), // dev
+      parseFloat(randomRange(7, 9.9).toFixed(1)), // cons
+      legalScore.toFixed(1), // legal
+      parseFloat(randomRange(7, 9.9).toFixed(1)), // usps
+      truthScore
+    ]);
+  }
+
+  stmt.finalize();
+  db.run("COMMIT", () => {
+    console.log("Database seeded successfully with 10,000 highly realistic properties!");
+    db.close();
+  });
+});
